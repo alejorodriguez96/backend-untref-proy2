@@ -88,6 +88,45 @@ app.post("/productos", async (req, res) => {
     }
 });
 
+// Ruta para actualizar un documento de la colección
+app.put("/productos/:id", async (req, res) => {
+    // Check if the new price is given
+    if (!req.body.precio) {
+        return res.status(400).json({ error: "Campos inválidos" });
+    }
+    try {
+        const collection = await getCollection("productos");
+        const producto = await collection.findOne({ codigo: parseInt(req.params.id) });
+        if (!producto) {
+            res.status(404).json({ error: "Producto no encontrado" });
+        } else {
+            await collection.updateOne(
+                { codigo: parseInt(req.params.id) },
+                { $set: { precio: req.body.precio } }
+            );
+            res.status(200).json(producto);
+        }
+    } catch (error) {
+        res.status(500).json({ error: "Error al conectarse a la BBDD" });
+    }
+});
+
+// Ruta para eliminar un documento de la colección
+app.delete("/productos/:id", async (req, res) => {
+    try {
+        const collection = await getCollection("productos");
+        const producto = await collection.findOne({ codigo: parseInt(req.params.id) });
+        if (!producto) {
+            res.status(404).json({ error: "Producto no encontrado" });
+        } else {
+            await collection.deleteOne({ codigo: parseInt(req.params.id) });
+            res.status(200).json(producto);
+        }
+    } catch (error) {
+        res.status(500).json({ error: "Error al conectarse a la BBDD" });
+    }
+});
+
 app.get("*", (req, res) => {
     res.status(404).end("URL no encontrada");
 });
