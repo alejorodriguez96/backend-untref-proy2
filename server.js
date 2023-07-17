@@ -3,6 +3,8 @@ const { connectToDB, disconnectFromMongoDB, getCollection } = require("./src/mon
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const PRODUCT_REQUIRED_FIELDS = ["codigo", "nombre", "categoria", "precio"];
+
 app.use(express.json());
 
 // Middleware para establecer el encabezado Content-Type en las respuestas
@@ -64,6 +66,23 @@ app.get("/productos/categoria/:categoria", async (req, res) => {
         } else {
             res.status(200).json(producto);
         }
+    } catch (error) {
+        res.status(500).json({ error: "Error al conectarse a la BBDD" });
+    }
+});
+
+// Ruta para crear un documento en la colección
+app.post("/productos", async (req, res) => {
+    const isValidOperation = Object.keys(req.body).every(
+        (key) => PRODUCT_REQUIRED_FIELDS.includes(key)
+    );
+    if (!isValidOperation) {
+        return res.status(400).json({ error: "Campos inválidos" });
+    }
+    try {
+        const collection = await getCollection("productos");
+        const producto = await collection.insertOne(req.body);
+        res.status(201).json(producto);
     } catch (error) {
         res.status(500).json({ error: "Error al conectarse a la BBDD" });
     }
